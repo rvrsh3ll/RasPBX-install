@@ -9,6 +9,9 @@ header("Referrer-Policy: strict-origin-when-cross-origin");
 // Start session
 session_start();
 
+// Include CSRF helper
+require_once __DIR__ . "/csrf.php";
+
 // Generate a random nonce for inline scripts
 $nonce = base64_encode(random_bytes(16));
 
@@ -19,11 +22,10 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-$n
 // --- CONFIG ---
 // Define valid users here (username => bcrypt hash)
 $USERS = [
-    "admin" => '$2y$10$8RVq260n.fnSKtNUPplDouMHC7aHLZevPP7igQVfswB/hBcUjQa0u',
+    "matej" => '$2y$10$gP0B/fGmgzew1qVfdTC7yuVzHRG5DN2rO1.mmk9VWt3N9Rsaoh0Ai',
     // hash for "ChangeYourPassword"
     // IMPORTANT: you can change default (or forgotten) password by typing this command to terminal:
     // php -r "echo password_hash('ChangeYourPassword', PASSWORD_DEFAULT) . PHP_EOL;"
-
 ];
 // --------------
 
@@ -52,7 +54,7 @@ function show_login_form($error = "") {
             body {
                 margin: 0;
                 font-family: sans-serif;
-                background: #f0d5b8; /* same background as your app */
+                background: #f0d5b8;
             }
 
             .container {
@@ -157,6 +159,9 @@ function show_login_form($error = "") {
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required autocomplete="current-password">
 
+                    <!-- CSRF token -->
+                    <?php echo getCsrfInput(); ?>
+
                     <button type="submit">Login</button>
                 </form>
             </div>
@@ -176,6 +181,12 @@ if (isset($_GET['logout'])) {
 
 // Process login request
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['username'], $_POST['password'])) {
+    // Validate CSRF token
+    if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+        show_login_form("Security check failed. Please try again.");
+        exit;
+    }
+
     global $USERS;
     $user = $_POST['username'];
     $pass = $_POST['password'];
