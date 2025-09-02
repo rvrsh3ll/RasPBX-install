@@ -30,7 +30,7 @@ SMS and MMS messages are received via e-mail, and you can see them also via SMS 
 - does show how many characters is left for SMS message (160 max.),
 - transliterate UTF-8 to ASCII to handle special characters that can not be sent in normal SMS,
 - checks the status of the sent SMS (successfully sent or if there was an error),
-- logs sent messages.
+- logs sent and received messages.
 
 **Received SMS and MMS messages** are sent to your e-mail and stored on a system too.
 
@@ -40,7 +40,7 @@ SMS and MMS messages are received via e-mail, and you can see them also via SMS 
 - has support for contact list,
 - mobile friendly.
 
-Both, SMS sender and SMS receiver, are using common authentication system and provide security headers. You can have multiple users, and passwords are stored in modern `bcrypt` format.
+Both, SMS sender and SMS receiver, are using common authentication system, provide security headers, have CSRF protection, protection against XSS via CSP and input sanitization. You can have multiple users, and passwords are stored in modern `bcrypt` format.
 
 ## Installation
 
@@ -399,6 +399,15 @@ $USERS = [
     // php -r "echo password_hash('ChangeYourPassword', PASSWORD_DEFAULT) . PHP_EOL;"
 ```
 
+`PASSWORD_DEFAULT` parameter means that bcrypt algorithm is used (this is default for PHP now).
+
+Bcrypt uses a cost parameter that specify the number of cycles to use in the algorithm. Currently cost is set to 10, but can be any value between 4 and 31. Increasing this number the algorithm will spend more time to generate the hash output, so it offers more protection.
+
+If you want to increase the cost (for instance to `12`), use this command (SSH on your RasPBX device) to generate bcrypt hash:
+```
+php -r "echo password_hash('ChangeYourPassword', PASSWORD_DEFAULT, ['cost' => 12]) . PHP_EOL;"
+```
+
 In [index.php](index.php) select the correct regex for phone number validation (currently it is enabled Slovenian phone numbers validation, you can enable E.164 format or write your own rules).
 
 In [get_contacts.php](get_contacts.php) just check that your contacts file is on the correct location (`/var/opt/raspbx/my_contacts.txt`) and in correct format.
@@ -418,7 +427,6 @@ if (attempts > 15) { // ~45s max wait
 ...and change number of attempts from 15 to a higher number.
 
 ## To do
-- CSRF protection
-- log SMS status, including possible timeout
+- log SMS status to a file, including possible timeout
 - show status of the sent SMS in SMS viewer (in SMS sender status is already checked and user notified)
 - check if dongle is actually present and active (`/usr/sbin/asterisk -rx 'dongle sms dongle0 +38640XXXXXX Test!'` -> `[dongle0] device disabled`)
