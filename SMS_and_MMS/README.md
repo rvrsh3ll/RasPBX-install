@@ -40,7 +40,7 @@ SMS and MMS messages are received via e-mail, and you can see them also via SMS 
 - has support for contact list,
 - mobile friendly.
 
-Both, SMS sender and SMS receiver, are using common authentication system, provide security headers, have CSRF protection, protection against XSS via CSP, session fixation protection and input sanitization. There is inactivity timeout set to 10 minutes. You can have multiple users, and passwords are stored in modern `bcrypt` format.
+Both, SMS sender and SMS receiver, are using common authentication system, provide security headers, have CSRF protection, protection against XSS via CSP, session fixation protection and input sanitization. There is inactivity timeout set to 10 minutes (after timeout, user is redirected back to login form). You can have multiple users, and passwords are stored in modern `bcrypt` format.
 
 ## Installation
 
