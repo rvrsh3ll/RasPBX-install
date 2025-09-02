@@ -12,7 +12,6 @@
  *  =================
  *  - Contact list support
  *  - Mobile friendly
- *  - CSRF protection, protection against XSS via CSP and input sanizization
  *  - Switchable regex for local or E.164 phone number formats
  *  - One phone number only (no multiple recipients)
  *  - Real-time JS sanitizing and server side phone number validation
@@ -174,6 +173,13 @@ button { padding: 15px; background: #2b2a28; color: white; border: none; border-
 .modal-content small { font-size: 0.85em; color: #555; }
 </style>
 <script nonce="<?= $nonce ?>">
+// Session timeout in seconds (match PHP $inactiveLimit in auth.php)
+const SESSION_TIMEOUT = 10 * 60; // 10 minutes
+
+setTimeout(() => {
+    window.location = '?logout=1'; // automatically logs out
+}, SESSION_TIMEOUT * 1000);
+
 const csrfToken = "<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>";
 const phoneRegex = new RegExp('<?= $jsPhoneRegex ?>');
 
