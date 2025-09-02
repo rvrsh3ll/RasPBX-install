@@ -12,6 +12,7 @@
  *  =================
  *  - Contact list support
  *  - Mobile friendly
+ *  - CSRF protection, protection against XSS via CSP and input sanizization
  *  - Switchable regex for local or E.164 phone number formats
  *  - One phone number only (no multiple recipients)
  *  - Real-time JS sanitizing and server side phone number validation
@@ -42,7 +43,10 @@
  *********************************************************************/
 
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/csrf.php';
 check_login();
+
+$csrfToken = generateCsrfToken();
 ?>
 
 <?php
@@ -87,6 +91,12 @@ $jsPhoneRegex = addslashes($patternOnly);
 
 // AJAX SMS SEND HANDLER
 if (isset($_POST['ajax']) && $_POST['ajax'] === 'sendSMS') {
+
+    if (!validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        echo json_encode(['status' => 'error', 'message' => 'Security check (CSRF) failed.']);
+        exit;
+    }
+
     header('Content-Type: application/json');
     $phone = trim($_POST['phonenumbers']);
     $message = substr(trim($_POST['message']), 0, 160);
@@ -164,6 +174,7 @@ button { padding: 15px; background: #2b2a28; color: white; border: none; border-
 .modal-content small { font-size: 0.85em; color: #555; }
 </style>
 <script nonce="<?= $nonce ?>">
+const csrfToken = "<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>";
 const phoneRegex = new RegExp('<?= $jsPhoneRegex ?>');
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -216,6 +227,7 @@ function sendSMS(e) {
     formData.append('ajax', 'sendSMS');
     formData.append('phonenumbers', phone);
     formData.append('message', msg);
+    formData.append('csrf_token', csrfToken);   // include CSRF
 
     fetch('', { method: 'POST', body: formData })
     .then(res => res.json())
