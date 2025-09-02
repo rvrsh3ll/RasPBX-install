@@ -284,6 +284,14 @@ tbody tr:nth-child(even) { background:#f9e6d2; }
 </main>
 
 <script nonce="<?= $nonce ?>">
+
+// Session timeout in seconds (match PHP $inactiveLimit in auth.php)
+const SESSION_TIMEOUT = 10 * 60; // 10 minutes
+
+setTimeout(() => {
+    window.location = '?logout=1'; // automatically logs out
+}, SESSION_TIMEOUT * 1000);
+
 const q = document.getElementById('q');
 const when = document.getElementById('when');
 const type = document.getElementById('type');
