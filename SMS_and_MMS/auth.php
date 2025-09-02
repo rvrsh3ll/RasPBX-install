@@ -1,5 +1,10 @@
 <?php
 // auth.php
+/*/ IMPORTANT:
+- change username and password
+- if you like, you can change session timeout (currently it is 10 minutes)
+*/
+
 // --- Security headers ---
 header("X-Frame-Options: DENY");
 header("X-Content-Type-Options: nosniff");
@@ -7,7 +12,20 @@ header("X-XSS-Protection: 1; mode=block");
 header("Referrer-Policy: strict-origin-when-cross-origin");
 
 // Start session
+ini_set('session.cookie_httponly', 1);   // JS cannot read session cookie
+// ini_set('session.cookie_secure', 1);  // cookie sent only over HTTPS - use only if you are using HTTPS!
+ini_set('session.use_strict_mode', 1);   // prevents session fixation
 session_start();
+
+// Session timeout: 10 minutes
+$inactiveLimit = 10 * 60; // 10 minutes in seconds
+if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > $inactiveLimit)) {
+    // Session expired
+    session_unset();
+    session_destroy();
+    session_start();  // restart a fresh session
+}
+$_SESSION['LAST_ACTIVITY'] = time();
 
 // Include CSRF helper
 require_once __DIR__ . "/csrf.php";
@@ -18,7 +36,6 @@ $nonce = base64_encode(random_bytes(16));
 // Send CSP header with the nonce included
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-$nonce'; img-src 'self' data:; style-src 'self' 'unsafe-inline'");
 
-
 // --- CONFIG ---
 // Define valid users here (username => bcrypt hash)
 $USERS = [
@@ -26,6 +43,7 @@ $USERS = [
     // hash for "ChangeYourPassword"
     // IMPORTANT: you can change default (or forgotten) password by typing this command to terminal:
     // php -r "echo password_hash('ChangeYourPassword', PASSWORD_DEFAULT) . PHP_EOL;"
+    // You can also increase cost parameter for bcrypt (see README.md).
 ];
 // --------------
 
@@ -192,6 +210,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['username'], $_POST['p
     $pass = $_POST['password'];
 
     if (isset($USERS[$user]) && password_verify($pass, $USERS[$user])) {
+        session_regenerate_id(true);   // prevent session fixation
         $_SESSION['loggedin'] = true;
         $_SESSION['username'] = $user;
 
